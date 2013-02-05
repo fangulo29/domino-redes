@@ -11,7 +11,7 @@ public class Player {
 
 	// TODO Ver a questão da senha do usuário
 	private final String userName;
-	private List<Domino> pieces;
+	private List<DominoPiece> pieces;
 
 	/**
 	 * 
@@ -32,7 +32,7 @@ public class Player {
 	/**
 	 * @return the pieces
 	 */
-	public List<Domino> getPieces() {
+	public List<DominoPiece> getPieces() {
 		return pieces;
 	}
 
@@ -40,7 +40,7 @@ public class Player {
 	 * @param pieces
 	 *            the pieces to set
 	 */
-	public void setPieces(List<Domino> pieces) {
+	public void setPieces(List<DominoPiece> pieces) {
 		this.pieces = pieces;
 	}
 
@@ -54,7 +54,7 @@ public class Player {
 		else {
 			int points = 0;
 
-			for (Domino d : pieces) {
+			for (DominoPiece d : pieces) {
 				points += d.getFace1() + d.getFace2();
 			}
 			return points;
