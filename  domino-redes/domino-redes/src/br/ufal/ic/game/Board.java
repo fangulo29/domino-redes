@@ -23,15 +23,15 @@ public class Board {
 	}
 
 	// Primeira peça jogada
-	private static Domino rootPiece = null;
+	private static DominoPiece rootPiece = null;
 
-	private List<Domino> dominoes = null;
+	private List<DominoPiece> dominoes = null;
 
 	/**
 	 * 
 	 */
 	public Board() {
-		dominoes = new ArrayList<Domino>();
+		dominoes = new ArrayList<DominoPiece>();
 	}
 
 	/**
@@ -40,7 +40,7 @@ public class Board {
 	 * @param position
 	 * @throws InvalidPieceToPlayException
 	 */
-	public void addPiece(Domino piece, PiecePosition position)
+	public void addPiece(DominoPiece piece, PiecePosition position)
 			throws InvalidPieceToPlayException {
 		if (rootPiece == null) {
 			rootPiece = piece;
@@ -51,7 +51,7 @@ public class Board {
 		if (!isAValidPieceToPlay(piece, position))
 			throw new InvalidPieceToPlayException();
 
-		Domino d = null;
+		DominoPiece d = null;
 
 		// Pega a peça do lugar onde será feita a jogada
 		d = (position.equals(PiecePosition.START_POSITION)) ? this
@@ -99,13 +99,13 @@ public class Board {
 	 * @param position
 	 * @return
 	 */
-	private boolean isAValidPieceToPlay(Domino piece, PiecePosition position) {
+	private boolean isAValidPieceToPlay(DominoPiece piece, PiecePosition position) {
 		// Mesa está vazia
 		if (dominoes == null || dominoes.size() == 0)
 			return true;
 
 		else {
-			Domino d = null;
+			DominoPiece d = null;
 
 			// Pega a peça do lugar onde será feita a jogada
 			d = (position.equals(PiecePosition.START_POSITION)) ? this
@@ -127,7 +127,7 @@ public class Board {
 	 * 
 	 * @return the <i>piece</i> from the <b>start</b>
 	 */
-	private Domino getStartPiece() {
+	private DominoPiece getStartPiece() {
 		return dominoes.get(0);
 	}
 
@@ -135,21 +135,21 @@ public class Board {
 	 * 
 	 * @return the <i>piece</i> from the <b>end</b>
 	 */
-	private Domino getEndPiece() {
+	private DominoPiece getEndPiece() {
 		return dominoes.get(dominoes.size() - 1);
 	}
 
 	/**
 	 * @return the rootPiece
 	 */
-	public Domino getRootPiece() {
+	public DominoPiece getRootPiece() {
 		return rootPiece;
 	}
 
 	/**
 	 * @return the dominoes
 	 */
-	public List<Domino> getDominoes() {
+	public List<DominoPiece> getDominoes() {
 		return dominoes;
 	}
 }

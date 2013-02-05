@@ -7,13 +7,13 @@ import br.ufal.ic.game.exception.InvalidFaceValueException;
  * @author Anderson Santos
  * 
  */
-public class Domino {
+public class DominoPiece {
 
 	private int face1;
 	private int face2;
 
-	private Domino faceLink1 = null;
-	private Domino faceLink2 = null;
+	private DominoPiece faceLink1 = null;
+	private DominoPiece faceLink2 = null;
 
 	/**
 	 * 
@@ -21,7 +21,7 @@ public class Domino {
 	 * @param face2
 	 * @throws InvalidFaceValueException
 	 */
-	public Domino(int face1, int face2) throws InvalidFaceValueException {
+	public DominoPiece(int face1, int face2) throws InvalidFaceValueException {
 		if (face1 < 0 || face1 > 6 || face2 < 0 || face2 > 6)
 			throw new InvalidFaceValueException();
 
@@ -38,7 +38,7 @@ public class Domino {
 		int temp1 = face1;
 		face1 = face2;
 		face2 = temp1;
-		Domino temp2 = faceLink1;
+		DominoPiece temp2 = faceLink1;
 		faceLink1 = faceLink2;
 		faceLink2 = temp2;
 	}
@@ -62,14 +62,14 @@ public class Domino {
 	/**
 	 * @return the facelink1
 	 */
-	public Domino getFaceLink1() {
+	public DominoPiece getFaceLink1() {
 		return faceLink1;
 	}
 
 	/**
 	 * @return the facelink2
 	 */
-	public Domino getFaceLink2() {
+	public DominoPiece getFaceLink2() {
 		return faceLink2;
 	}
 
@@ -77,7 +77,7 @@ public class Domino {
 	 * @param facelink1
 	 *            the facelink1 to set
 	 */
-	public void setFaceLink1(Domino facelink1) {
+	public void setFaceLink1(DominoPiece facelink1) {
 		this.faceLink1 = facelink1;
 	}
 
@@ -85,7 +85,7 @@ public class Domino {
 	 * @param facelink2
 	 *            the facelink2 to set
 	 */
-	public void setFaceLink2(Domino facelink2) {
+	public void setFaceLink2(DominoPiece facelink2) {
 		this.faceLink2 = facelink2;
 	}
 
@@ -120,7 +120,7 @@ public class Domino {
 			return false;
 		}
 
-		Domino other = (Domino) obj;
+		DominoPiece other = (DominoPiece) obj;
 
 		// face order doesn't matter
 		if ((face1 == other.face1 && face2 == other.face2)

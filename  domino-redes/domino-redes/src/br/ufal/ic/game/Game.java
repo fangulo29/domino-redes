@@ -16,10 +16,10 @@ import br.ufal.ic.game.exception.InvalidPieceToPlayException;
 public class Game {
 
 	// TODO Criar algo para gerenciar eventos/mensagens do jogo
-	private List<Domino> dominoes;
+	private List<DominoPiece> dominoes;
 	private final List<Player> players;
 	private final Board board;
-	private Domino firstPiece = null;
+	private DominoPiece firstPiece = null;
 
 	/**
 	 * 
@@ -50,11 +50,11 @@ public class Game {
 
 		try {
 			// board.addPiece(firstPiece, PiecePosition.START_POSITION);
-			board.addPiece(new Domino(6, 6), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(6, 2), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(2, 3), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(3, 5), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(0, 6), PiecePosition.END_POSITION);
+			board.addPiece(new DominoPiece(6, 6), PiecePosition.START_POSITION);
+			board.addPiece(new DominoPiece(6, 2), PiecePosition.START_POSITION);
+			board.addPiece(new DominoPiece(2, 3), PiecePosition.START_POSITION);
+			board.addPiece(new DominoPiece(3, 5), PiecePosition.START_POSITION);
+			board.addPiece(new DominoPiece(0, 6), PiecePosition.END_POSITION);
 		} catch (InvalidPieceToPlayException | InvalidFaceValueException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,12 +66,12 @@ public class Game {
 	 * Double-6 domino set
 	 */
 	private void createDominoPieces() {
-		dominoes = new ArrayList<Domino>();
+		dominoes = new ArrayList<DominoPiece>();
 
 		for (int i = 0; i <= 6; i++) {
 			for (int j = i; j <= 6; j++) {
 				try {
-					dominoes.add(new Domino(i, j));
+					dominoes.add(new DominoPiece(i, j));
 				} catch (InvalidFaceValueException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -87,7 +87,7 @@ public class Game {
 	private void setRandomPiecesForPlayers() {
 		for (int i = 0; i < players.size(); i++) {
 
-			List<Domino> pieces = new ArrayList<Domino>();
+			List<DominoPiece> pieces = new ArrayList<DominoPiece>();
 
 			for (int j = 0; j < 6; j++) {
 				int index = generateNumberBetween(0, 28 - (i * 6 + j) - 1);
@@ -132,7 +132,7 @@ public class Game {
 
 		do {
 			for (Player p : players) {
-				for (Domino d : p.getPieces()) {
+				for (DominoPiece d : p.getPieces()) {
 					if (d.getFace1() == pieceSought
 							&& d.getFace2() == pieceSought) {
 						currentPlayer = players.indexOf(p);
