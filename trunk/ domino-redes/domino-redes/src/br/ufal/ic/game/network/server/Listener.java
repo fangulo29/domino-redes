@@ -19,6 +19,11 @@ import br.ufal.ic.game.Player;
 import br.ufal.ic.game.network.Message;
 import br.ufal.ic.game.network.Message.Acao;
 
+/**
+ * 
+ * @author Anderson Santos
+ * 
+ */
 public class Listener implements Runnable {
 
 	private Scanner leitor;
@@ -27,24 +32,32 @@ public class Listener implements Runnable {
 	private ObjectInputStream entradaStream;
 	private ObjectOutputStream saidaStream;
 
-	private Gson gson;
+	private final Gson gson;
 
 	private final Server server;
 	private Game game;
-	private Map<Integer, List<DominoPiece>> mapJogadoresPecasCorrentes;
-	private List<String> nomesJogadoresConectados;
+	private Map<Integer, List<DominoPiece>> mapPlayesCurrentPieces;
+	private final List<String> namesOfConnectedPlayers;
 
+	/**
+	 * 
+	 * @param server
+	 * @param socketCliente
+	 */
 	public Listener(Server server, Socket socketCliente) {
 
 		this.server = server;
 		this.socketCliente = socketCliente;
+		this.gson = new Gson();
+
+		namesOfConnectedPlayers = new ArrayList<String>();
 
 		try {
 
 			leitor = new Scanner(socketCliente.getInputStream());
 			pw = new PrintWriter(socketCliente.getOutputStream());
 
-			/* saida do servidor com referência da saída do cliente */
+			// saida do servidor com referência da saída do cliente
 			saidaStream = new ObjectOutputStream(
 					socketCliente.getOutputStream());
 
@@ -56,20 +69,16 @@ public class Listener implements Runnable {
 		}
 	}
 
-	public void encaminharParaTodos(Message mensagem) {
+	public void sendToAll(Message message) {
 
-		System.err.println("encaminharParaTodos(Mensagem mensagem)");
-		System.err
-				.println("SERVIDOR: Inicio do encaminhamento da mensagem para todos...");
+		System.err.println("SERVIDOR: encaminhando da mensagem para todos...");
 
-		/* para cada jogador na lista de conectador será entregue a mensagem */
+		// será entregue a mensagem para cada jogador na lista de conectar
 		for (Socket socketCliente : server.getListaJogadoresConectados()) {
 
 			try {
-				/*
-				 * objeto de saída (escritor) com referência do socket de
-				 * cliente
-				 */
+				// objeto de saída (escritor) com referência do socket do
+				// cliente
 				ObjectOutputStream objetoSaida = new ObjectOutputStream(
 						socketCliente.getOutputStream()) {
 
@@ -91,11 +100,11 @@ public class Listener implements Runnable {
 
 				};
 
-				objetoSaida.writeObject(mensagem);
+				objetoSaida.writeObject(message);
 				// objetoSaida.flush();
 
 				System.err.println("SERVIDOR: Escrevi o objeto mensagem: "
-						+ mensagem + " para o cliente " + socketCliente);
+						+ message + " para o cliente " + socketCliente);
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -104,6 +113,9 @@ public class Listener implements Runnable {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void run() {
 
@@ -121,7 +133,7 @@ public class Listener implements Runnable {
 			}
 
 			if (mensagemRecebida.getAcao().equals(Acao.CHAT)) {
-				encaminharParaTodos(mensagemRecebida);
+				sendToAll(mensagemRecebida);
 			}
 
 			/* adicionar os nomes do jogadores no quadrinho do chat */
@@ -131,15 +143,15 @@ public class Listener implements Runnable {
 						.getNomeJogador();
 
 				// adicionando na lista de nomes dos jogadores conectados
-				nomesJogadoresConectados.add(nomeJogadorAdicionado);
+				namesOfConnectedPlayers.add(nomeJogadorAdicionado);
 
 				mensagemRecebida.setNomesJogadoresConectadosGSON(gson
-						.toJson(nomesJogadoresConectados));
+						.toJson(namesOfConnectedPlayers));
 
 				System.out.println("ENCAMINHANDO PARA TODOS : "
-						+ nomesJogadoresConectados);
+						+ namesOfConnectedPlayers);
 
-				encaminharParaTodos(mensagemRecebida);
+				sendToAll(mensagemRecebida);
 
 			}
 
@@ -166,13 +178,13 @@ public class Listener implements Runnable {
 					// populando com as peças SORTEADAS||| em cada jogador
 					// num MAP com a porta de origem de cada jogador
 
-					mapJogadoresPecasCorrentes = new HashMap<Integer, List<DominoPiece>>();
+					mapPlayesCurrentPieces = new HashMap<Integer, List<DominoPiece>>();
 
 					for (Player jogador : listaJogadoresDomino) {
 						// listaJogadoresDomino.add(new
 						// Player(socketJogador.getPort())); //referência é
 						// a porta de origem
-						mapJogadoresPecasCorrentes.put(
+						mapPlayesCurrentPieces.put(
 								Integer.valueOf(jogador.getUserName()),
 								jogador.getPieces()); // peças sorteadas
 
@@ -182,9 +194,9 @@ public class Listener implements Runnable {
 					// para todos
 
 					mensagemRecebida.setMapJogadoresPecasCorrentesGSON(gson
-							.toJson(mapJogadoresPecasCorrentes, HashMap.class));
+							.toJson(mapPlayesCurrentPieces, HashMap.class));
 
-					encaminharParaTodos(mensagemRecebida);
+					sendToAll(mensagemRecebida);
 
 				}
 
