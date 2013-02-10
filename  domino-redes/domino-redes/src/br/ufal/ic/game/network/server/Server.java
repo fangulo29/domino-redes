@@ -1,26 +1,20 @@
 package br.ufal.ic.game.network.server;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 
-import br.ufal.ic.game.DominoPiece;
-import br.ufal.ic.game.Game;
-import br.ufal.ic.game.Player;
 import br.ufal.ic.game.network.Message;
-import br.ufal.ic.game.network.Message.Acao;
-
-import com.google.gson.Gson;
 
 @SuppressWarnings("serial")
 public class Server extends JFrame {
@@ -30,14 +24,9 @@ public class Server extends JFrame {
 	private final int porta;
 
 	private int numJogadoresConectados;
-	private final Gson gson;
-	private final List<String> nomesJogadoresConectados;
 	private final List<Socket> listaJogadoresConectados;
 	// private final boolean jogoIniciou = false;
 	// private List<PrintWriter> escritores = new ArrayList<PrintWriter>();
-
-	private Game jogo;
-	private Map<Integer, List<DominoPiece>> mapJogadoresPecasCorrentes;
 
 	private JButton jButtonIniciar;
 	private JButton jButtonNovoJogador;
@@ -48,12 +37,10 @@ public class Server extends JFrame {
 
 	public Server(int porta) {
 		this.porta = porta;
-		gson = new Gson();
 		iniciarComponentesGUI();
 		inicializarServidor(porta);
 
 		numJogadoresConectados = 0;
-		nomesJogadoresConectados = new ArrayList<String>();
 		listaJogadoresConectados = new ArrayList<Socket>();
 	}
 
