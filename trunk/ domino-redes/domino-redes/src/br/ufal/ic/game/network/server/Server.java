@@ -67,7 +67,7 @@ public class Server extends JFrame {
 		jButtonNovoJogador = new JButton();
 		jTextFieldStatus = new JTextField();
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		jLabelServidor.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+		jLabelServidor.setFont(new java.awt.Font("Tahoma", 1, 18));
 		jLabelServidor.setText("Servidor DomiNóis!");
 
 		jButtonIniciar.setText("Iniciar");
@@ -246,7 +246,7 @@ public class Server extends JFrame {
 				 * thread aberta com um while para análise de requests dos
 				 * clientes
 				 */
-				new Thread(new EscutaCliente(jogadorSocket)).start();
+				new Thread(new Listener(this, jogadorSocket)).start();
 
 				/*
 				 * adicionar o jogador na lista de jogadores do servidor
@@ -333,131 +333,6 @@ public class Server extends JFrame {
 		}
 	}
 
-	private class EscutaCliente implements Runnable {
-
-		private Scanner leitor;
-		private PrintWriter pw;
-		private final Socket socketCliente;
-		private ObjectInputStream entradaStream;
-		private ObjectOutputStream saidaStream;
-
-		public EscutaCliente(Socket socketCliente) {
-
-			this.socketCliente = socketCliente;
-
-			try {
-
-				leitor = new Scanner(socketCliente.getInputStream());
-				pw = new PrintWriter(socketCliente.getOutputStream());
-
-				/* saida do servidor com referência da saída do cliente */
-				saidaStream = new ObjectOutputStream(
-						socketCliente.getOutputStream());
-
-				entradaStream = new ObjectInputStream(
-						socketCliente.getInputStream());
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		@Override
-		public void run() {
-
-			/**/
-			Message mensagemRecebida = null;
-
-			while (true) {
-
-				try {
-					System.err
-							.println("SERVIDOR: esperando ação de cliente...");
-					mensagemRecebida = (Message) entradaStream.readObject();
-					System.out
-							.println("Servidor recebeu = " + mensagemRecebida);
-				} catch (Exception e) {
-					e.printStackTrace();
-					mensagemRecebida = null;
-				}
-
-				if (mensagemRecebida.getAcao().equals(Acao.CHAT)) {
-					encaminharParaTodos(mensagemRecebida);
-				}
-
-				/* adicionar os nomes do jogadores no quadrinho do chat */
-				if (mensagemRecebida.getAcao().equals(Acao.JOGADOR_ADICIONADO)) {
-
-					String nomeJogadorAdicionado = mensagemRecebida
-							.getNomeJogador();
-
-					// adicionando na lista de nomes dos jogadores conectados
-					nomesJogadoresConectados.add(nomeJogadorAdicionado);
-
-					mensagemRecebida.setNomesJogadoresConectadosGSON(gson
-							.toJson(nomesJogadoresConectados));
-
-					System.out.println("ENCAMINHANDO PARA TODOS : "
-							+ nomesJogadoresConectados);
-
-					encaminharParaTodos(mensagemRecebida);
-
-				}
-
-				/* mensagem de inicialização do jogo */
-				if (mensagemRecebida.getAcao().equals(Acao.JOGO_INICIADO)) {
-
-					List<Player> listaJogadoresDomino = new ArrayList<Player>();
-
-					for (Socket socketJogador : listaJogadoresConectados) {
-						listaJogadoresDomino.add(new Player(socketJogador
-								.getPort())); // a referência é a porta de
-												// origem de cada player
-					}
-
-					// se tiver de dois até quatro players
-					if (listaJogadoresDomino.size() >= 2
-							&& listaJogadoresDomino.size() <= 4) {
-
-						// iniciaremos o jogo (enviando as mensagens com as
-						// peças sorteadas, para os jogadores num Map)
-						jogo = new Game(listaJogadoresDomino);
-						jogo.startGame();
-
-						// populando com as peças SORTEADAS||| em cada jogador
-						// num MAP com a porta de origem de cada jogador
-
-						mapJogadoresPecasCorrentes = new HashMap<Integer, List<DominoPiece>>();
-
-						for (Player jogador : listaJogadoresDomino) {
-							// listaJogadoresDomino.add(new
-							// Player(socketJogador.getPort())); //referência é
-							// a porta de origem
-							mapJogadoresPecasCorrentes.put(
-									Integer.valueOf(jogador.getUserName()),
-									jogador.getPieces()); // peças sorteadas
-
-						}
-
-						// mandando o Map serializado e retornando a mensagem
-						// para todos
-
-						mensagemRecebida.setMapJogadoresPecasCorrentesGSON(gson
-								.toJson(mapJogadoresPecasCorrentes,
-										HashMap.class));
-
-						encaminharParaTodos(mensagemRecebida);
-
-					}
-
-				}
-
-			}
-
-		}
-
-	}
-
 	// private void atualizarLookAndFeel() {
 	// try {
 	// for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager
@@ -481,6 +356,13 @@ public class Server extends JFrame {
 	// java.util.logging.Level.SEVERE, null, ex);
 	// }
 	// }
+
+	/**
+	 * @return the listaJogadoresConectados
+	 */
+	protected List<Socket> getListaJogadoresConectados() {
+		return listaJogadoresConectados;
+	}
 
 	public static void main(String args[]) {
 		Server s = new Server(5000);
