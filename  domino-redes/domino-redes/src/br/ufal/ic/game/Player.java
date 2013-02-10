@@ -23,6 +23,14 @@ public class Player {
 	}
 
 	/**
+	 * 
+	 * @param codeName
+	 */
+	public Player(Integer codeName) {
+		this.userName = String.valueOf(codeName);
+	}
+
+	/**
 	 * @return the userName
 	 */
 	public String getUserName() {
