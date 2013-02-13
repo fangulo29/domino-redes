@@ -15,6 +15,8 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import br.ufal.ic.game.network.Message;
+import br.ufal.ic.game.network.server.command.NewPlayerCommand;
+import br.ufal.ic.game.network.server.command.StartCommand;
 
 @SuppressWarnings("serial")
 public class Server extends JFrame {
@@ -23,7 +25,7 @@ public class Server extends JFrame {
 	private ServerSocket server;
 	private final int porta;
 
-	private int numJogadoresConectados;
+	private int numberOfConnectedPlayers;
 	private final List<Socket> listaJogadoresConectados;
 	// private final boolean jogoIniciou = false;
 	// private List<PrintWriter> escritores = new ArrayList<PrintWriter>();
@@ -40,12 +42,17 @@ public class Server extends JFrame {
 		iniciarComponentesGUI();
 		inicializarServidor(porta);
 
-		numJogadoresConectados = 0;
+		numberOfConnectedPlayers = 0;
 		listaJogadoresConectados = new ArrayList<Socket>();
 	}
 
 	private void iniciarComponentesGUI() {
 		// atualizarLookAndFeel();
+
+		// Comandos
+		StartCommand start = new StartCommand();
+		NewPlayerCommand newPlayer = new NewPlayerCommand(this);
+
 		setTitle("Servidor DomiNóis!");
 		jLabelServidor = new JLabel();
 		jButtonIniciar = new JButton();
@@ -59,23 +66,14 @@ public class Server extends JFrame {
 
 		jButtonIniciar.setText("Iniciar");
 
-		jButtonIniciar.addActionListener(new java.awt.event.ActionListener() {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				jButtonIniciarActionPerformed(evt);
-			}
-		});
+		jButtonIniciar.addActionListener(start);
 
 		jLabelPorta.setText("Porta:");
 		jTextFieldPorta.setText("5000");
 		jButtonNovoJogador.setText("+Jogador");
-		jButtonNovoJogador
-				.addActionListener(new java.awt.event.ActionListener() {
-					@Override
-					public void actionPerformed(java.awt.event.ActionEvent evt) {
-						jButtonNovoJogadorActionPerformed(evt);
-					}
-				});
+
+		jButtonNovoJogador.addActionListener(newPlayer);
+
 		jTextFieldStatus.setBackground(new java.awt.Color(0, 0, 0));
 		jTextFieldStatus.setFont(new java.awt.Font("Tahoma", 2, 15));
 		jTextFieldStatus.setForeground(new java.awt.Color(0, 204, 204));
@@ -176,30 +174,6 @@ public class Server extends JFrame {
 		pack();
 	}
 
-	private void jButtonIniciarActionPerformed(java.awt.event.ActionEvent evt) {
-		JOptionPane.showMessageDialog(this, "Implementar iniciar");
-	}
-
-	private void jButtonNovoJogadorActionPerformed(
-			java.awt.event.ActionEvent evt) {
-
-		System.err.println("Temos " + numJogadoresConectados + " conectados!");
-
-		if (numJogadoresConectados <= 4) {
-
-			/* abertura de uma nova tela de jogador */
-			// new Jogador();
-
-			String nomeJogador = JOptionPane.showInputDialog("Nome do Jogador");
-
-		} else {
-			JOptionPane.showMessageDialog(this,
-					"Já existem jogadores suficientes.");
-		}
-	}
-
-	/* TELA */
-
 	private void inicializarServidor(int porta) {
 		try {
 			server = new ServerSocket(porta);
@@ -218,7 +192,7 @@ public class Server extends JFrame {
 
 		try {
 
-			while (numJogadoresConectados < 4) {
+			while (numberOfConnectedPlayers < 4) {
 
 				/* aguarda até que alguém se conecte */
 				System.err
@@ -240,7 +214,7 @@ public class Server extends JFrame {
 				 * (referência)
 				 */
 				listaJogadoresConectados.add(jogadorSocket);
-				numJogadoresConectados++;
+				numberOfConnectedPlayers++;
 
 				JOptionPane
 						.showMessageDialog(
@@ -251,7 +225,7 @@ public class Server extends JFrame {
 
 				/* enviando para o elemento do visual */
 				jTextFieldStatus.setText("ON " + porta + "! " + "\n"
-						+ numJogadoresConectados + " jogadores conectados!");
+						+ numberOfConnectedPlayers + " jogadores conectados!");
 
 			}
 
@@ -349,6 +323,13 @@ public class Server extends JFrame {
 	 */
 	protected List<Socket> getListaJogadoresConectados() {
 		return listaJogadoresConectados;
+	}
+
+	/**
+	 * @return the numberOfConnectedPlayers
+	 */
+	public int getNumberOfConnectedPlayers() {
+		return numberOfConnectedPlayers;
 	}
 
 	public static void main(String args[]) {
