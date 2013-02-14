@@ -15,9 +15,9 @@ import com.google.gson.Gson;
 
 import br.ufal.ic.game.DominoPiece;
 import br.ufal.ic.game.Game;
-import br.ufal.ic.game.Player;
 import br.ufal.ic.game.network.Message;
 import br.ufal.ic.game.network.Message.Acao;
+import br.ufal.ic.game.network.client.Player;
 
 /**
  * 

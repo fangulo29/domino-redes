@@ -7,6 +7,7 @@ import java.util.Random;
 import br.ufal.ic.game.Board.PiecePosition;
 import br.ufal.ic.game.exception.InvalidFaceValueException;
 import br.ufal.ic.game.exception.InvalidPieceToPlayException;
+import br.ufal.ic.game.network.client.Player;
 
 /**
  * 
