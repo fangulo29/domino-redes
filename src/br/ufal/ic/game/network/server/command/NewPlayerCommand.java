@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
+import br.ufal.ic.game.network.client.Player;
 import br.ufal.ic.game.network.server.Server;
 
 /**
@@ -15,14 +16,14 @@ import br.ufal.ic.game.network.server.Server;
 @SuppressWarnings("serial")
 public class NewPlayerCommand extends AbstractAction {
 
-	private final int numberOfConnectedPlayers;
-
+	private Server server;
+	
 	/**
 	 * 
 	 * @param server
 	 */
 	public NewPlayerCommand(Server server) {
-		this.numberOfConnectedPlayers = server.getNumberOfConnectedPlayers();
+		this.server = server;
 	}
 
 	/**
@@ -30,16 +31,17 @@ public class NewPlayerCommand extends AbstractAction {
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.err
-				.println("Temos " + numberOfConnectedPlayers + " conectados!");
+		
+		Integer numberOfConnectedPlayers = server.getNumberOfConnectedPlayers();
+		
+		System.err.println("Ja temos " + numberOfConnectedPlayers + " conectados!");
 
 		if (numberOfConnectedPlayers <= 4) {
 
-			/* abertura de uma nova tela de jogador */
-			// new Jogador();
-
-			String nomeJogador = JOptionPane.showInputDialog("Nome do Jogador");
-
+			/* abertura de uma nova tela de jogador */		
+			//String nomeJogador = JOptionPane.showInputDialog("Nome do Jogador");
+			new Player().startGUI();
+			
 		} else {
 			JOptionPane.showMessageDialog(null, this,
 					"Já existem jogadores suficientes.",

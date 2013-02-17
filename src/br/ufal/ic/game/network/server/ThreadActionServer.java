@@ -19,50 +19,42 @@ import br.ufal.ic.game.network.Message;
 import br.ufal.ic.game.network.Message.Acao;
 import br.ufal.ic.game.network.client.Player;
 
-/**
- * 
- * @author Anderson Santos
- * 
- */
-public class Listener implements Runnable {
+/* todos os requests dos clientes entrarão aqui! :) */
+public class ThreadActionServer implements Runnable {
 
 	private Scanner leitor;
-	private PrintWriter pw;
-	private final Socket socketCliente;
+	private PrintWriter escritor;
+	private Socket socketCliente;
 	private ObjectInputStream entradaStream;
 	private ObjectOutputStream saidaStream;
 
 	private final Gson gson;
-
 	private final Server server;
-	private Game game;
-	private Map<Integer, List<DominoPiece>> mapPlayesCurrentPieces;
-	private final List<String> namesOfConnectedPlayers;
+
+
 
 	/**
 	 * 
 	 * @param server
 	 * @param socketCliente
 	 */
-	public Listener(Server server, Socket socketCliente) {
+	public ThreadActionServer(Server server, Socket socketCliente) {
 
 		this.server = server;
 		this.socketCliente = socketCliente;
 		this.gson = new Gson();
 
-		namesOfConnectedPlayers = new ArrayList<String>();
 
 		try {
 
+			/* operações nas entradas e saídas dos streams do cliente */
 			leitor = new Scanner(socketCliente.getInputStream());
-			pw = new PrintWriter(socketCliente.getOutputStream());
+			escritor = new PrintWriter(socketCliente.getOutputStream());
 
 			// saida do servidor com referência da saída do cliente
-			saidaStream = new ObjectOutputStream(
-					socketCliente.getOutputStream());
-
-			entradaStream = new ObjectInputStream(
-					socketCliente.getInputStream());
+			saidaStream = new ObjectOutputStream(socketCliente.getOutputStream());
+			
+			entradaStream = new ObjectInputStream(socketCliente.getInputStream());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -73,14 +65,14 @@ public class Listener implements Runnable {
 
 		System.err.println("SERVIDOR: encaminhando da mensagem para todos...");
 
-		// será entregue a mensagem para cada jogador na lista de conectar
-		for (Socket socketCliente : server.getListaJogadoresConectados()) {
+		// será entregue a mensagem para cada jogador na lista de conectados no servidor
+		for (Socket socketCliente : server.getListOfConnectedPlayers()) {
 
 			try {
 				// objeto de saída (escritor) com referência do socket do
 				// cliente
-				ObjectOutputStream objetoSaida = new ObjectOutputStream(
-						socketCliente.getOutputStream()) {
+				ObjectOutputStream objetoSaida = 
+								new ObjectOutputStream(socketCliente.getOutputStream()) {
 
 					/*
 					 * qdo vc faz um .writeObject((Object)) ele salva um
@@ -114,71 +106,92 @@ public class Listener implements Runnable {
 	}
 
 	/**
-	 * 
+	 * RECEPÇÃO DAS MENSAGENS DOS CLIENTES!
 	 */
 	@Override
 	public void run() {
 
 		Message mensagemRecebida = null;
 
-		while (true) {
+		while(true) {
 
 			try {
+				
 				System.err.println("SERVIDOR: esperando ação de cliente...");
-				mensagemRecebida = (Message) entradaStream.readObject();
+				mensagemRecebida = (Message)entradaStream.readObject();
 				System.out.println("Servidor recebeu = " + mensagemRecebida);
+			
 			} catch (Exception e) {
 				e.printStackTrace();
 				mensagemRecebida = null;
 			}
 
+			
+			
+			
+			
 			if (mensagemRecebida.getAcao().equals(Acao.CHAT)) {
 				sendToAll(mensagemRecebida);
 			}
 
-			/* adicionar os nomes do jogadores no quadrinho do chat */
+			
+			
+			
+			
+			
+			/* adicionar/atualizar os nomes do jogadores no quadrinho do chat */
 			if (mensagemRecebida.getAcao().equals(Acao.JOGADOR_ADICIONADO)) {
 
-				String nomeJogadorAdicionado = mensagemRecebida
-						.getNomeJogador();
+				String nomeJogadorAdicionado =
+								mensagemRecebida.getNomeJogador();
 
-				// adicionando na lista de nomes dos jogadores conectados
-				namesOfConnectedPlayers.add(nomeJogadorAdicionado);
+				// adicionando na lista de nomes dos jogadores conectados no servidor
+				server.addNameInListNameOfConnectedPlayers(nomeJogadorAdicionado);
+				
+				//lista de nomes dos players conectados no servidor 
+				List<String> namesOfConnectedPlayersInServer = server.getNamesOfConnectedPlayers();
 
-				mensagemRecebida.setNomesJogadoresConectadosGSON(gson
-						.toJson(namesOfConnectedPlayers));
+				//setando a lista dos nomes dos jogadores (serializada) em mensagem, que será entregue a todos
+				mensagemRecebida.setNomesJogadoresConectadosGSON(gson.toJson(namesOfConnectedPlayersInServer));
 
-				System.out.println("ENCAMINHANDO PARA TODOS : "
-						+ namesOfConnectedPlayers);
+				System.out.println("ENCAMINHANDO PARA TODOS : " + namesOfConnectedPlayersInServer);
 
-				sendToAll(mensagemRecebida);
+				sendToAll(mensagemRecebida); //enviar para todos
 
 			}
 
+			
+			
+			
+			
+			
 			/* mensagem de inicialização do jogo */
 			if (mensagemRecebida.getAcao().equals(Acao.JOGO_INICIADO)) {
 
 				List<Player> listaJogadoresDomino = new ArrayList<Player>();
 
-				for (Socket socketJogador : server
-						.getListaJogadoresConectados()) {
-					listaJogadoresDomino
-							.add(new Player(socketJogador.getPort()));
+				/*para cada jogador conectado no servidor (sockets), 
+				 * adicionar um player para referência no game
+				 */
+				for (Socket socketJogador : server.getListOfConnectedPlayers()) {
+					listaJogadoresDomino.add(new Player(socketJogador.getPort()));
 				}
 
 				// se tiver de dois até quatro players
-				if (listaJogadoresDomino.size() >= 2
-						&& listaJogadoresDomino.size() <= 4) {
+				if (listaJogadoresDomino.size() >= 2 && listaJogadoresDomino.size() <= 4) {
 
 					// iniciaremos o jogo (enviando as mensagens com as
 					// peças sorteadas, para os jogadores num Map)
-					game = new Game(listaJogadoresDomino);
-					game.startGame();
+					Game newGame = new Game(listaJogadoresDomino);
+					
+					server.setGame(newGame);
+					server.startGame();
 
 					// populando com as peças SORTEADAS||| em cada jogador
-					// num MAP com a porta de origem de cada jogador
-
-					mapPlayesCurrentPieces = new HashMap<Integer, List<DominoPiece>>();
+					// num MAP com a porta de origem de cada jogador no servidor
+	
+					Map<Integer,List<DominoPiece>> mapPlayesCurrentPieces = 
+												new HashMap<Integer, List<DominoPiece>>();
 
 					for (Player jogador : listaJogadoresDomino) {
 						// listaJogadoresDomino.add(new
@@ -190,6 +203,9 @@ public class Listener implements Runnable {
 
 					}
 
+					//atualizando o map de players e suas respectivas peças NO SERVIDOR
+					server.setMapPlayesCurrentPieces(mapPlayesCurrentPieces);
+					
 					// mandando o Map serializado e retornando a mensagem
 					// para todos
 
@@ -200,6 +216,12 @@ public class Listener implements Runnable {
 
 				}
 
+				
+				
+				
+				
+				
+				
 			}
 
 		}

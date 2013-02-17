@@ -12,8 +12,8 @@ public class DominoPiece {
 	private int face1;
 	private int face2;
 
-	private DominoPiece faceLink1 = null;
-	private DominoPiece faceLink2 = null;
+	private DominoPiece faceLink1;
+	private DominoPiece faceLink2;
 
 	/**
 	 * 

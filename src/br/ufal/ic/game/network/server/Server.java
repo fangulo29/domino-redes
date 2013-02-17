@@ -6,31 +6,46 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
+import br.ufal.ic.game.DominoPiece;
+import br.ufal.ic.game.Game;
 import br.ufal.ic.game.network.Message;
+import br.ufal.ic.game.network.client.Player;
 import br.ufal.ic.game.network.server.command.NewPlayerCommand;
-import br.ufal.ic.game.network.server.command.StartCommand;
+import br.ufal.ic.game.network.server.command.InformationCommand;
+
 
 @SuppressWarnings("serial")
 public class Server extends JFrame {
 
-	/* informaçoes dos jogadores conectados e de status dos jogos */
 	private ServerSocket server;
 	private final int porta;
 
+	
+	/* informaçoes dos jogadores conectados */
+	
 	private int numberOfConnectedPlayers;
-	private final List<Socket> listaJogadoresConectados;
-	// private final boolean jogoIniciou = false;
-	// private List<PrintWriter> escritores = new ArrayList<PrintWriter>();
+	private List<String> namesOfConnectedPlayers; //lista de strings com os nomes dos players conectados
+	private List<Socket> listOfConnectedPlayers; //lista de SOCKETS dos players conectados
+	private Map<Integer, List<DominoPiece>> mapPlayesCurrentPieces; //map com key:jogadores e suas peças
 
-	private JButton jButtonIniciar;
+	
+	/* dados do jogo de dominó */
+	private Game game;
+	
+	
+	
+	private JButton jButtonInformation;
 	private JButton jButtonNovoJogador;
 	private JLabel jLabelPorta;
 	private JLabel jLabelServidor;
@@ -43,19 +58,20 @@ public class Server extends JFrame {
 		inicializarServidor(porta);
 
 		numberOfConnectedPlayers = 0;
-		listaJogadoresConectados = new ArrayList<Socket>();
+		namesOfConnectedPlayers = new ArrayList<String>();
+		listOfConnectedPlayers = new ArrayList<Socket>();
 	}
 
 	private void iniciarComponentesGUI() {
-		// atualizarLookAndFeel();
 
-		// Comandos
-		StartCommand start = new StartCommand();
-		NewPlayerCommand newPlayer = new NewPlayerCommand(this);
+		// Comandos ActionEvent
+		InformationCommand informationCommand = new InformationCommand(this);
+		NewPlayerCommand newPlayerCommand = new NewPlayerCommand(this);
 
+		updateLookAndFeel(); //deixar o visual mais bonito [pode causar crash em linux]
 		setTitle("Servidor DomiNóis!");
 		jLabelServidor = new JLabel();
-		jButtonIniciar = new JButton();
+		jButtonInformation = new JButton();
 		jLabelPorta = new JLabel();
 		jTextFieldPorta = new JTextField();
 		jButtonNovoJogador = new JButton();
@@ -64,15 +80,16 @@ public class Server extends JFrame {
 		jLabelServidor.setFont(new java.awt.Font("Tahoma", 1, 18));
 		jLabelServidor.setText("Servidor DomiNóis!");
 
-		jButtonIniciar.setText("Iniciar");
+		jButtonInformation.setText("Informações");
 
-		jButtonIniciar.addActionListener(start);
+		jButtonInformation.addActionListener(informationCommand); //setting the command
 
 		jLabelPorta.setText("Porta:");
 		jTextFieldPorta.setText("5000");
+		jTextFieldPorta.setEnabled(false);
 		jButtonNovoJogador.setText("+Jogador");
 
-		jButtonNovoJogador.addActionListener(newPlayer);
+		jButtonNovoJogador.addActionListener(newPlayerCommand); //setting the command
 
 		jTextFieldStatus.setBackground(new java.awt.Color(0, 0, 0));
 		jTextFieldStatus.setFont(new java.awt.Font("Tahoma", 2, 15));
@@ -115,7 +132,7 @@ public class Server extends JFrame {
 																				javax.swing.GroupLayout.Alignment.LEADING,
 																				false)
 																				.addComponent(
-																						jButtonIniciar,
+																						jButtonInformation,
 																						javax.swing.GroupLayout.DEFAULT_SIZE,
 																						277,
 																						Short.MAX_VALUE)
@@ -161,7 +178,7 @@ public class Server extends JFrame {
 																.addPreferredGap(
 																		javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 																.addComponent(
-																		jButtonIniciar,
+																		jButtonInformation,
 																		javax.swing.GroupLayout.PREFERRED_SIZE,
 																		37,
 																		javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -171,7 +188,29 @@ public class Server extends JFrame {
 														111,
 														javax.swing.GroupLayout.PREFERRED_SIZE))
 								.addContainerGap()));
-		pack();
+			pack();
+		
+
+	}
+	
+	
+	private void updateLookAndFeel(){
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(Player.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(Player.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(Player.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(Player.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
 	}
 
 	private void inicializarServidor(int porta) {
@@ -207,13 +246,13 @@ public class Server extends JFrame {
 				 * thread aberta com um while para análise de requests dos
 				 * clientes
 				 */
-				new Thread(new Listener(this, jogadorSocket)).start();
+				new Thread(new ThreadActionServer(this, jogadorSocket)).start();
 
 				/*
 				 * adicionar o jogador na lista de jogadores do servidor
 				 * (referência)
 				 */
-				listaJogadoresConectados.add(jogadorSocket);
+				listOfConnectedPlayers.add(jogadorSocket);
 				numberOfConnectedPlayers++;
 
 				JOptionPane
@@ -241,15 +280,14 @@ public class Server extends JFrame {
 				.println("SERVIDOR: Inicio do encaminhamento da mensagem para todos...");
 
 		/* para cada jogador na lista de conectador será entregue a mensagem */
-		for (Socket socketCliente : listaJogadoresConectados) {
+		for (Socket socketCliente : listOfConnectedPlayers) {
 
 			try {
 				/*
 				 * objeto de saída (escritor) com referência do socket de
 				 * cliente
 				 */
-				ObjectOutputStream objetoSaida = new ObjectOutputStream(
-						socketCliente.getOutputStream()) {
+				ObjectOutputStream objetoSaida = new ObjectOutputStream(socketCliente.getOutputStream()) {
 
 					/*
 					 * qdo vc faz um .writeObject((Object)) ele salva um
@@ -291,52 +329,78 @@ public class Server extends JFrame {
 			// é enviado para todos, só que vai ser tratado na tela do jogador
 
 		} catch (Exception e) {
+			
 		}
 	}
-
-	// private void atualizarLookAndFeel() {
-	// try {
-	// for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager
-	// .getInstalledLookAndFeels()) {
-	// if ("Nimbus".equals(info.getName())) {
-	// javax.swing.UIManager.setLookAndFeel(info.getClassName());
-	// break;
-	// }
-	// }
-	// } catch (ClassNotFoundException ex) {
-	// java.util.logging.Logger.getLogger(Jogador.class.getName()).log(
-	// java.util.logging.Level.SEVERE, null, ex);
-	// } catch (InstantiationException ex) {
-	// java.util.logging.Logger.getLogger(Jogador.class.getName()).log(
-	// java.util.logging.Level.SEVERE, null, ex);
-	// } catch (IllegalAccessException ex) {
-	// java.util.logging.Logger.getLogger(Jogador.class.getName()).log(
-	// java.util.logging.Level.SEVERE, null, ex);
-	// } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-	// java.util.logging.Logger.getLogger(Jogador.class.getName()).log(
-	// java.util.logging.Level.SEVERE, null, ex);
-	// }
-	// }
-
-	/**
-	 * @return the listaJogadoresConectados
-	 */
-	protected List<Socket> getListaJogadoresConectados() {
-		return listaJogadoresConectados;
+	
+	
+	
+	
+	
+	
+	/* GETS|SETS*/
+	
+	
+	protected Map<Integer, List<DominoPiece>> getMapPlayesCurrentPieces() {
+		return mapPlayesCurrentPieces;
 	}
 
-	/**
-	 * @return the numberOfConnectedPlayers
-	 */
+	protected void setMapPlayesCurrentPieces(
+			Map<Integer, List<DominoPiece>> mapPlayesCurrentPieces) {
+		this.mapPlayesCurrentPieces = mapPlayesCurrentPieces;
+	}
+
+	protected List<String> getNamesOfConnectedPlayers() {
+		return namesOfConnectedPlayers;
+	}
+
+	//adicionar nome na lista de NOMES dos players conectados
+	protected void addNameInListNameOfConnectedPlayers(String name){
+		this.namesOfConnectedPlayers.add(name);
+	}
+
+	protected List<Socket> getListOfConnectedPlayers() {
+		return listOfConnectedPlayers;
+	}
+
+
 	public int getNumberOfConnectedPlayers() {
 		return numberOfConnectedPlayers;
 	}
 
+	protected Game getGame() {
+		return game;
+	}
+
+	protected void setGame(Game game) {
+		this.game = game;
+	}
+
+	protected void startGame(){
+		this.game.startGame();
+	}
+	
+	//informações do servidor
+	public String getInformations(){
+		return "Informações do Servidor:\n" +
+				"URL: " + server.getLocalSocketAddress() + "\n" +
+				"PORT: " + server.getLocalPort() + "\n" +
+				"PLAYERS: " + namesOfConnectedPlayers + "\n" +
+				"MAP/PIECES: " + mapPlayesCurrentPieces;
+	}
+	
+	public void showServerInformationsDialog() {
+		JOptionPane.showMessageDialog(this, getInformations());	
+	}
+	
+	
 	public static void main(String args[]) {
 		Server s = new Server(5000);
 		s.setVisible(true);
 		s.buscarJogadores();
-
-		// ServidorGamebuscarJogadores();
 	}
+
+
+	
+	
 }
