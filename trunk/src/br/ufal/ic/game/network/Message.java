@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("serial")
 public class Message implements Serializable {
 	
 	public static enum Acao { NULL , CHAT , JOGADOR_ADICIONADO , JOGO_INICIADO };
