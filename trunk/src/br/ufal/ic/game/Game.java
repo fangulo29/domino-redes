@@ -7,151 +7,154 @@ import br.ufal.ic.game.exception.InvalidFaceValueException;
 import br.ufal.ic.game.exception.InvalidPieceToPlayException;
 import br.ufal.ic.game.network.client.Player;
 
+/**
+ * 
+ * @author Anderson Santos
+ * @author Luciano Melo
+ * 
+ */
 
 public class Game {
 
-	// TODO Criar algo para gerenciar eventos/mensagens do jogo
-	private List<DominoPiece> dominoes;
-	private final List<Player> players;
-	private final Board board;
-	private DominoPiece firstPiece = null;
+    // TODO Criar algo para gerenciar eventos/mensagens do jogo
+    private List<DominoPiece> dominoes;
+    private final List<Player> players;
+    private final Board board;
+    private DominoPiece firstPiece = null;
 
-	/**
-	 * 
-	 * @param players
+    /**
+     * 
+     * @param players
+     */
+    public Game(List<Player> players) {
+	// TODO Definir número de jogadores permitidos
+	this.players = players;
+	this.board = new Board();
+    }
+
+    /**
+     * @throws InvalidFaceValueException
+     * @throws InvalidPieceToPlayException
+     * 
+     */
+    public void startGame() {
+	createDominoPieces();
+
+	System.out.println("Jogo iniciado com " + players.size()
+		+ " jogadores.\n");
+
+	// Separa 6 peças para cada jogador
+	setRandomPiecesForPlayers();
+
+	// Define qual jogador será o primeiro a jogar
+	findPlayerToStart();
+
+	/*
+	 * try { //board.addPiece(firstPiece, PiecePosition.START_POSITION);
+	 * board.addPiece(new Domino(6, 6), PiecePosition.START_POSITION);
+	 * board.addPiece(new Domino(6, 2), PiecePosition.START_POSITION);
+	 * board.addPiece(new Domino(2, 3), PiecePosition.START_POSITION);
+	 * board.addPiece(new Domino(3, 5), PiecePosition.START_POSITION);
+	 * board.addPiece(new Domino(0, 6), PiecePosition.END_POSITION);
+	 * board.addPiece(new Domino(0, 6), PiecePosition.START_POSITION); }
+	 * catch (InvalidPieceToPlayException | InvalidFaceValueException e) {
+	 * // TODO Auto-generated catch block e.printStackTrace(); }
 	 */
-	public Game(List<Player> players) {
-		// TODO Definir número de jogadores permitidos
-		this.players = players;
-		this.board = new Board();
-	}
 
-	/**
-	 * @throws InvalidFaceValueException
-	 * @throws InvalidPieceToPlayException
-	 * 
-	 */
-	public void startGame() {
-		createDominoPieces();
+    }
 
-		System.out.println("Jogo iniciado com " + players.size()
-				+ " jogadores.\n");
+    /**
+     * Double-6 domino set
+     */
+    private void createDominoPieces() {
+	dominoes = new ArrayList<DominoPiece>();
 
-		// Separa 6 peças para cada jogador
-		setRandomPiecesForPlayers();
-
-		// Define qual jogador será o primeiro a jogar
-		findPlayerToStart();
-
-		/*
+	for (int i = 0; i <= 6; i++) {
+	    for (int j = i; j <= 6; j++) {
 		try {
-			//board.addPiece(firstPiece, PiecePosition.START_POSITION);
-			board.addPiece(new Domino(6, 6), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(6, 2), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(2, 3), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(3, 5), PiecePosition.START_POSITION);
-			board.addPiece(new Domino(0, 6), PiecePosition.END_POSITION);
-			board.addPiece(new Domino(0, 6), PiecePosition.START_POSITION);
-		} catch (InvalidPieceToPlayException | InvalidFaceValueException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		    dominoes.add(new DominoPiece(i, j));
+		} catch (InvalidFaceValueException e) {
+		    // TODO Auto-generated catch block
+		    e.printStackTrace();
 		}
-		*/
-
+	    }
 	}
+	System.out.println("Dominó double 6 inicializado.\n");
+    }
 
-	/**
-	 * Double-6 domino set
-	 */
-	private void createDominoPieces() {
-		dominoes = new ArrayList<DominoPiece>();
+    /**
+     * Set 6 pieces for each player randomly
+     */
+    private void setRandomPiecesForPlayers() {
+	for (int i = 0; i < players.size(); i++) {
 
-		for (int i = 0; i <= 6; i++) {
-			for (int j = i; j <= 6; j++) {
-				try {
-					dominoes.add(new DominoPiece(i, j));
-				} catch (InvalidFaceValueException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+	    List<DominoPiece> pieces = new ArrayList<DominoPiece>();
+
+	    for (int j = 0; j < 6; j++) {
+		int index = generateNumberBetween(0, 28 - (i * 6 + j) - 1);
+		// int index = (int) (Math.random() * (28 - (i * 6 + j)));
+		pieces.add(dominoes.remove(index));
+	    }
+	    players.get(i).setPieces(pieces);
+	    System.out.println("Peças distribuídas para o jogador "
+		    + players.get(i).getUserName());
+	}
+	System.out.println("Peças distribuídas para os " + players.size()
+		+ " jogadores.\n");
+    }
+
+    /**
+     * 
+     * @param start
+     * @param end
+     * @return
+     */
+    private int generateNumberBetween(int start, int end) {
+	Random random = new Random();
+
+	if (start > end)
+	    throw new IllegalArgumentException(
+		    "start can't be bigger than end.");
+	long range = (long) end - (long) start + 1;
+	long fraction = (long) (range * random.nextDouble());
+	int randomNumber = (int) (fraction + start);
+
+	return randomNumber;
+    }
+
+    /**
+     * 
+     * @return
+     */
+    private int findPlayerToStart() {
+	int currentPlayer = -1; // Jogar que irá iniciar o jogo
+	int pieceSought = 6; // Bomba procurada, quem tiver irá iniciar o jogo
+	firstPiece = null;
+
+	do {
+	    for (Player p : players) {
+		for (DominoPiece d : p.getPieces()) {
+		    if (d.getFace1() == pieceSought
+			    && d.getFace2() == pieceSought) {
+			currentPlayer = players.indexOf(p);
+			firstPiece = d; // Jogador deverá jogar está peça
+			break;
+		    }
 		}
-		System.out.println("Dominó double 6 inicializado.\n");
-	}
+		if (currentPlayer != -1)
+		    break;
+	    }
+	    pieceSought--; // Procura bombas menores
+	} while (currentPlayer == -1 && pieceSought >= 0);
+	// Nesse caso não foram encontradas nenhuma bomba, jogador 0 poderá
+	// iniciar com qualquer peça
+	// TODO Verificar outros critérios
+	if (currentPlayer == -1)
+	    currentPlayer = 0;
 
-	/**
-	 * Set 6 pieces for each player randomly
-	 */
-	private void setRandomPiecesForPlayers() {
-		for (int i = 0; i < players.size(); i++) {
-
-			List<DominoPiece> pieces = new ArrayList<DominoPiece>();
-
-			for (int j = 0; j < 6; j++) {
-				int index = generateNumberBetween(0, 28 - (i * 6 + j) - 1);
-				// int index = (int) (Math.random() * (28 - (i * 6 + j)));
-				pieces.add(dominoes.remove(index));
-			}
-			players.get(i).setPieces(pieces);
-			System.out.println("Peças distribuídas para o jogador "
-					+ players.get(i).getUserName());
-		}
-		System.out.println("Peças distribuídas para os " + players.size()
-				+ " jogadores.\n");
-	}
-
-	/**
-	 * 
-	 * @param start
-	 * @param end
-	 * @return
-	 */
-	private int generateNumberBetween(int start, int end) {
-		Random random = new Random();
-
-		if (start > end)
-			throw new IllegalArgumentException(
-					"start can't be bigger than end.");
-		long range = (long) end - (long) start + 1;
-		long fraction = (long) (range * random.nextDouble());
-		int randomNumber = (int) (fraction + start);
-
-		return randomNumber;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	private int findPlayerToStart() {
-		int currentPlayer = -1; // Jogar que irá iniciar o jogo
-		int pieceSought = 6; // Bomba procurada, quem tiver irá iniciar o jogo
-		firstPiece = null;
-
-		do {
-			for (Player p : players) {
-				for (DominoPiece d : p.getPieces()) {
-					if (d.getFace1() == pieceSought
-							&& d.getFace2() == pieceSought) {
-						currentPlayer = players.indexOf(p);
-						firstPiece = d; // Jogador deverá jogar está peça
-						break;
-					}
-				}
-				if (currentPlayer != -1)
-					break;
-			}
-			pieceSought--; // Procura bombas menores
-		} while (currentPlayer == -1 && pieceSought >= 0);
-		// Nesse caso não foram encontradas nenhuma bomba, jogador 0 poderá
-		// iniciar com qualquer peça
-		// TODO Verificar outros critérios
-		if (currentPlayer == -1)
-			currentPlayer = 0;
-
-		System.out.println("Jogador "
-				+ players.get(currentPlayer).getUserName()
-				+ " inicia o jogo com a peça " + firstPiece.toString() + ".\n");
-		return currentPlayer;
-	}
+	System.out.println("Jogador "
+		+ players.get(currentPlayer).getUserName()
+		+ " inicia o jogo com a peça " + firstPiece.toString() + ".\n");
+	return currentPlayer;
+    }
 }
