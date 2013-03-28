@@ -7,22 +7,27 @@ import javax.swing.JOptionPane;
 
 import br.ufal.ic.game.network.server.Server;
 
-
+/**
+ * 
+ * @author Anderson Santos
+ * @author Luciano Melo
+ * 
+ */
 @SuppressWarnings("serial")
 public class InformationCommand extends AbstractAction {
 
-	private Server server;
-	
-	public InformationCommand(Server server) {
-		this.server = server;
-	}
+    private final Server server;
 
-	/**
+    public InformationCommand(Server server) {
+	this.server = server;
+    }
+
+    /**
 	 * 
 	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		server.showServerInformationsDialog();
-	}
+    @Override
+    public void actionPerformed(ActionEvent e) {
+	server.showServerInformationsDialog();
+    }
 
 }
